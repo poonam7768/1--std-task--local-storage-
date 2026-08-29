@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>std-task</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+     integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+</head>
+<body>
+   <div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <form id="todoform">
+                        <label for="fname">Enter First Name:</label>
+                        <input type="text" id="fname" class="form-control">
+
+                         <label for="lname">Enter Last Name:</label>
+                        <input type="text" id="lname" class="form-control">
+
+                         <label for="subject">Enter subject:</label>
+                        <input type="text" id="subject" class="form-control">
+
+                        <button type="submit" id="addbtn" class="btn btn-primary btn-block btn-sm mt-3">Add</button>
+                        <button type="button" id="updatebtn" class="btn btn-warning btn-block btn-sm mt-3 d-none">update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <table class=" table table-bordered text-center">
+                <thead>
+                    <tr>
+                        <td>sr.no.</td>
+                        <td>first Name</td>
+                        <td>Last Name</td>
+                        <td>subject</td>
+                        <td>Edit</td>
+                        <td>Delete</td>
+                    </tr>
+                </thead>
+                <tbody id="tableInfo">
+                    <!-- <tr>
+                        <td>1</td>
+                        <td>Rutu</td>
+                        <td>Patil</td>
+                        <td>Math</td>
+                        <td><button class="btn btn-sm btn-primary">Edit</button></td>
+                        <td><button class="btn btn-sm btn-danger">Update</button></td>
+                    </tr> -->
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+   </div>
+
+
+
+
+
+
+
+<script src="./assets/js/app.js"></script>
+</body>
+</html>
