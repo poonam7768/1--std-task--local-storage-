@@ -1,145 +1,215 @@
 const cl = console.log;
 
-const todoform = document.getElementById('todoform')
+const stdform = document.getElementById('stdform')
 const fname = document.getElementById('fname')
 const lname = document.getElementById('lname')
 const subject = document.getElementById('subject')
 const tableInfo= document.getElementById('tableInfo')
 const addbtn = document.getElementById('addbtn')
 const updatebtn = document.getElementById('updatebtn')
+const spinner = document.getElementById('spinner')
+
+const BASE_URL = `https://crud-dfd04-default-rtdb.firebaseio.com/`
+const student_url = `${BASE_URL}student.json`
 
 
-// let Array = [
-//     {
-//       stdId:"11",
-//       stdfname:"May",
-//       stdlname:"Doe",
-//       stdsubject:"Html"
-//     },
-//     {
-//      stdId:"12",
-//      stdfname:"Merry",
-//      stdlname:"Doe",
-//      stdsubject:"Javascript"   
-//     }
-// ]
+ const state ={
+    stdArr : [],
+    stdedit_id : null,
+}
 
-//  localStorage.setItem("stdArr",JSON.stringify(Array))
+function objToArr(obj){
+    for(const key in obj){
+        obj[key].id = key;
+        state.stdArr.unshift(obj[key])
+    }
+}
 
- let stdArr =JSON.parse(localStorage.getItem('stdArr')) || [];
+function handleSpinner(flag){
+    if(flag){
+        spinner.classList.remove('d-none')
+    }else{
+        spinner.classList.add('d-none')
+    }
+}
+
+
+function snackBar(msg,icon){
+    Swal.fire({
+        title:msg,
+        timer:3000,
+        icon:icon
+    })
+}
+
+function makeApiCall(url,methodName,body=null){
+    return fetch(url,{
+        method:methodName,
+        headers:{
+            "Content-Type":"application/json",
+            "auth":"JWT token"
+        },
+        body:body ? JSON.stringify(body) : null
+    })
+     .then(res=>{
+        if(!res.ok){
+            throw new Error ()
+        }
+        return res.json()
+     })
+}
+
 
 
 //read
 
-function oncreate(arr){
+function oncreate(){
+    handleSpinner(true)
+    makeApiCall(student_url,"GET")
+     .then((data)=>{
+         cl(data)
+         objToArr(data)
+         templiting(state.stdArr)
+     })
+      .catch(err=>{
+        snackBar("something went wrong!!","error")
+      })
+       .finally(()=>{
+        handleSpinner()
+       })
+}
+oncreate()
+
+function templiting(arr){
     let result = ``
     arr.forEach((t,i) => {
-        result += `<tr id="${t.stdId}">
+        result += `<tr id="${t.id}">
                         <td>${i+1}</td>
-                        <td>${t.stdfname}</td>
-                        <td>${t.stdlname}</td>
-                        <td>${t.stdsubject}</td>
+                        <td>${t.fname}</td>
+                        <td>${t.lname}</td>
+                        <td>${t.subject}</td>
                         <td><button onclick="onedit(this)" class="btn btn-sm btn-primary">Edit</button></td>
                         <td><button onclick="ondelete(this)" class="btn btn-sm btn-danger">delete</button></td>
                     </tr>` 
     })
     tableInfo.innerHTML = result
-
 }
 
-oncreate(stdArr)
 
 //create 
 function onAddstd(eve){
     eve.preventDefault();
 
     let newObj ={
-        stdId:Date.now().toString(),
-        stdfname:fname.value,
-        stdlname:lname.value,
-        stdsubject:subject.value
+        fname:fname.value,
+        lname:lname.value,
+        subject:subject.value
     }
-
-    stdArr.push(newObj)
-    todoform.reset()
-    localStorage.setItem("stdArr",JSON.stringify(stdArr))
-    let tr = document.createElement('tr')
-    tr.className = 'table table-bordered'
-    tr.setAttribute('id',newObj.stdId)
-    tr.innerHTML = `    
-                        <td>${stdArr.length}</td>
-                        <td>${newObj.stdfname}</td>
-                        <td>${newObj.stdlname}</td>
-                        <td>${newObj.stdsubject}</td>
-                        <td><button onclick="onedit(this)" class="btn btn-sm btn-primary">Edit</button></td>
-                        <td><button onclick="ondelete(this)" class="btn btn-sm btn-danger">delete</button></td>
-                   `
-                   tableInfo.append(tr)
+    handleSpinner(true)
+    makeApiCall(student_url,"POST",newObj)
+      .then(res=>{
+        cl(res)
+        newObj.id = res.name
+        state.stdArr.unshift(newObj)
+        templiting(state.stdArr)
+        snackBar(`new student added successfully!`,'success')
+        stdform.reset()
+      })
+       .catch(err=>{
+        snackBar(err,'error')
+       })
+      .finally(()=>{
+        handleSpinner()
+      })
 }
 
 //delete
-
 function ondelete(ele){
     let removeId = ele.closest('tr').id
-    let getConfirmation = confirm('Are you sure ? you want to delete ?')
-    if(getConfirmation){
-        let getIndex = stdArr.findIndex(t => t.stdId === removeId)
-        stdArr.splice(getIndex,1)
-        localStorage.setItem("stdArr",JSON.stringify(stdArr))
+
+         Swal.fire({
+  title: "Are you sure?",
+  icon: "warning",
+  showCancelButton: true,
+  
+  confirmButtonText: "Yes, Remove it!"
+}).then((result) => {
+  if (result.isConfirmed){
+    handleSpinner(true)
+    let remove_url = `${BASE_URL}student/${removeId}.json`
+    makeApiCall(remove_url,"DELETE")
+     .then(res=>{
+        let getIndex = state.stdArr.findIndex(s=>s.id === removeId)
+        state.stdArr.splice(getIndex,1)
         ele.closest('tr').remove()
 
-        let tds = [...document.querySelectorAll('#tableInfo tr td:first-child')]
-        tds.forEach((td,i)=>{
-            td.innerText = i + 1
-        })
-    }
+         let td = [...document.querySelectorAll("#tableInfo tr td:first-child")];
+                       td.forEach((td,i)=>{
+                        td.innerHTML = i+1
+                       })
+        snackBar(`The Data Removed Successfully !!!`,'success')
+     })
+     .catch(err=>{
+        snackBar(err,'error')
+     })
+     .finally(()=>{
+        handleSpinner()
+     })
+  }
+})
 }
-
 //edit
+
 function onedit(ele){
     let editId = ele.closest('tr').id
-    localStorage.setItem('updateId',editId)
-    let editObj = stdArr.find(t=>t.stdId === editId)
-   
-    fname.value = editObj.stdfname ;
-    lname.value = editObj.stdlname;
-    subject.value = editObj.stdsubject;
+    state.stdedit_id = editId
+    let editObj = state.stdArr.find(s=>s.id === editId)
+
+    fname.value = editObj.fname,
+    lname.value = editObj.lname,
+    subject.value = editObj.subject
 
     addbtn.classList.add('d-none')
     updatebtn.classList.remove('d-none')
 
 }
 
-
 //update
-function onupdte(eve){
-    let updateId = localStorage.getItem("updateId")
-    cl(updateId)
-    localStorage.removeItem("updateId")
-    let updatedObj = {
-        stdId:updateId,
-        stdfname:fname.value,
-        stdlname:lname.value,
-        stdsubject:subject.value
+
+function onupdate(eve){
+    let updateId = state.stdedit_id;
+    let updateURl = `${BASE_URL}student/${updateId}.json`
+    let oldObj = state.stdArr.find(s=> s.id === state.stdedit_id)
+    let updatedObj={
+        fname : fname.value,
+        lname : lname.value,
+        subject : subject.value,
+        id : updateId
     }
-    let getIndex = stdArr.findIndex(t => t.stdId === updateId)
-    stdArr[getIndex] = updatedObj
+    handleSpinner(true)
+    makeApiCall(updateURl,"PATCH",updatedObj)
+     .then(res =>{
+        let getIndex = state.stdArr.findIndex(s=>s.id === updateId)
+        state.stdedit_id = null;
+        state.stdArr[getIndex] = updatedObj
 
-    localStorage.setItem("stdArr",JSON.stringify(stdArr))
-    let tr = document.getElementById(updateId).children;
+        templiting(state.stdArr)
 
-    tr[1].innerText = updatedObj.stdfname
-    tr[2].innerText = updatedObj.stdlname
-    tr[3].innerText = updatedObj.stdsubject
+        updatebtn.classList.add('d-none')
+        addbtn.classList.remove('d-none')
+        stdform.reset()
 
-    addbtn.classList.remove('d-none')
-    updatebtn.classList.add('d-none')
-
-    todoform.reset()
+        snackBar('updated successfully!!!','success')
+     })
+     .catch(err=>{
+        snackBar(err,'error')
+     })
+     .finally(()=>{
+        handleSpinner()
+     })
 }
 
 
 
-
-todoform.addEventListener('submit',onAddstd)
-updatebtn.addEventListener('click',onupdte)
+stdform.addEventListener('submit',onAddstd)
+updatebtn.addEventListener('click',onupdate)
